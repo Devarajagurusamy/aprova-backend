@@ -1,32 +1,19 @@
 const jwt = require("jsonwebtoken");
 
-const authenticateUser = (req, res, next) => {
-  const token = req.headers.authorization;
-  if (!token) return res.status(401).json({ message: "Unauthorized" });
+const protect = (req, res, next) => {
+  const token = req.header("Authorization");
+
+  if (!token) {
+    return res.status(401).json({ message: "No token, authorization denied" });
+  }
 
   try {
-    const decoded = jwt.verify(token, process.env.SECRET_KEY);
-    req.userId = decoded.userId;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded.id;
     next();
   } catch (error) {
-    res.status(401).json({ message: "Invalid token" });
+    res.status(401).json({ message: "Token is not valid" });
   }
 };
 
-const authenticateAdmin = (req, res, next) => {
-  const token = req.headers.authorization;
-  if (!token) return res.status(401).json({ message: "Unauthorized" });
-
-  try {
-    const decoded = jwt.verify(token, process.env.SECRET_KEY);
-    if (decoded.role !== "admin")
-      return res.status(403).json({ message: "Forbidden" });
-
-    req.userId = decoded.userId;
-    next();
-  } catch (error) {
-    res.status(401).json({ message: "Invalid token" });
-  }
-};
-
-module.exports = { authenticateUser, authenticateAdmin };
+module.exports = protect;
